@@ -5,66 +5,61 @@
 
 class PomodoroModule : public Module {
 private:
-    unsigned long pomodoroEndTime = 0;
-    unsigned long pomodoroDuration = 25 * 60 * 1000;
-    bool pomodoroRunning = false;
-    unsigned long lastDraw = 0;
+    unsigned long endTime = 0;
+    unsigned long duration = 0;
+    bool running = false;
+    bool isWork = true;
     
-    // Custom tiny font for compact display
-    const uint8_t TINY_FONT[10][3] = {
-        {0xF8, 0x88, 0xF8}, // 0
-        {0x00, 0xF8, 0x00}, // 1
-        {0xE8, 0xA8, 0xB8}, // 2
-        {0x88, 0xA8, 0xF8}, // 3
-        {0x38, 0x20, 0xF8}, // 4
-        {0xB8, 0xA8, 0xE8}, // 5
-        {0xF8, 0xA8, 0xE8}, // 6
-        {0x08, 0x08, 0xF8}, // 7
-        {0xF8, 0xA8, 0xF8}, // 8
-        {0xB8, 0xA8, 0xF8}  // 9
-    };
+    int workMin = 30;
+    int breakMin = 5;
+    
+    unsigned long lastUpdate = 0;
+    char timeDisplay[16];
 
 public:
     PomodoroModule() {}
     
-    void init() override {
-        // Nothing to initialize
-    }
+    void init() override {}
     
     void activate() override {
         active = true;
         P->displayClear();
+        lastUpdate = 0;
     }
     
     void deactivate() override {
         active = false;
-        pomodoroRunning = false;
     }
     
     void update() override {
-        if (!active || !pomodoroRunning) return;
+        if (!active) return;
         
-        long remaining = pomodoroEndTime - millis();
+        if (P->displayAnimate()) {
+            // Animation done
+        }
+        
+        if (!running) return;
+        
+        long remaining = endTime - millis();
         
         if (remaining <= 0) {
-            pomodoroRunning = false;
-            active = false; // Auto-deactivate when done
-            // Switch to completion message
+            running = false;
             P->displayClear();
-            P->displayText("DONE!", PA_CENTER, 100, 0, PA_SCROLL_LEFT, PA_SCROLL_LEFT);
+            
+            if (isWork) {
+                P->displayText("BREAK", PA_CENTER, 0, 0, PA_PRINT, PA_NO_EFFECT);
+            } else {
+                P->displayText("WORK", PA_CENTER, 0, 0, PA_PRINT, PA_NO_EFFECT);
+            }
             return;
         }
-
-        // Refresh display every 100ms
-        if (millis() - lastDraw > 100) {
+        
+        if (millis() - lastUpdate > 1000) {
             int mins = remaining / 60000;
             int secs = (remaining % 60000) / 1000;
-            float progress = (float)remaining / (float)pomodoroDuration;
-            
-            drawTinyTime(mins, secs);
-            drawBorder(progress);
-            
-            lastDraw = millis();
+            sprintf(timeDisplay, "%02d:%02d", mins, secs);
+            P->displayText(timeDisplay, PA_CENTER, 0, 0, PA_PRINT, PA_NO_EFFECT);
+            lastUpdate = millis();
         }
     }
     
@@ -73,30 +68,69 @@ public:
     }
     
     const char* getWebControls() override {
-        return R"rawliteral(
-        <div style="border-left: 5px solid #FF9800;">
-            <h3>🍅 Pomodoro Timer</h3>
-            <button class="pomo" onclick="sendRequest('/pomodoro/start?min=25')">Focus (25m)</button>
-            <button class="pomo" onclick="sendRequest('/pomodoro/start?min=5')" style="background:#8BC34A;">Break (5m)</button>
-            <button class="pomo" onclick="sendRequest('/pomodoro/start?min=15')" style="background:#9C27B0;">Custom (15m)</button>
-            <button class="stop" onclick="sendRequest('/pomodoro/stop')">Stop</button>
-        </div>
-        )rawliteral";
+        static String html;
+        html = "<div style=\"border-left: 5px solid #FF9800;\">";
+        html += "<h3>🍅 Pomodoro</h3>";
+        html += "<p style=\"margin:5px 0;\"><label>Work: <span id=\"wv\">" + String(workMin) + "</span> min</label><br>";
+        html += "<input type=\"range\" id=\"ws\" min=\"5\" max=\"60\" value=\"" + String(workMin) + "\" ";
+        html += "oninput=\"document.getElementById('wv').textContent=this.value\" ";
+        html += "onchange=\"sendRequest('/pomo/set?w='+this.value)\"></p>";
+        html += "<p style=\"margin:5px 0;\"><label>Break: <span id=\"bv\">" + String(breakMin) + "</span> min</label><br>";
+        html += "<input type=\"range\" id=\"bs\" min=\"1\" max=\"30\" value=\"" + String(breakMin) + "\" ";
+        html += "oninput=\"document.getElementById('bv').textContent=this.value\" ";
+        html += "onchange=\"sendRequest('/pomo/set?b='+this.value)\"></p>";
+        html += "<button class=\"pomo\" onclick=\"sendRequest('/pomo/work')\">Start Work</button>";
+        html += "<button class=\"pomo\" style=\"background:#8BC34A;\" onclick=\"sendRequest('/pomo/break')\">Start Break</button>";
+        html += "<button class=\"stop\" onclick=\"sendRequest('/pomo/stop')\">Stop</button>";
+        html += "</div>";
+        return html.c_str();
     }
     
     bool handleWebRequest(String request) override {
-        if (request.indexOf("/pomodoro/start") >= 0) {
-            if (request.indexOf("min=") >= 0) {
-                int mStart = request.indexOf("min=") + 4;
-                int minutes = request.substring(mStart, request.indexOf("&", mStart) == -1 ? 
-                    request.indexOf(" ", mStart) : request.indexOf("&", mStart)).toInt();
-                startTimer(minutes);
-                return true;
+        if (request.indexOf("/pomo/set") >= 0) {
+            if (request.indexOf("w=") >= 0) {
+                int idx = request.indexOf("w=") + 2;
+                int end = request.indexOf("&", idx);
+                if (end == -1) end = request.indexOf(" ", idx);
+                workMin = request.substring(idx, end).toInt();
+                if (workMin < 5) workMin = 5;
+                if (workMin > 60) workMin = 60;
             }
+            if (request.indexOf("b=") >= 0) {
+                int idx = request.indexOf("b=") + 2;
+                int end = request.indexOf("&", idx);
+                if (end == -1) end = request.indexOf(" ", idx);
+                breakMin = request.substring(idx, end).toInt();
+                if (breakMin < 1) breakMin = 1;
+                if (breakMin > 30) breakMin = 30;
+            }
+            return true;
         }
         
-        if (request.indexOf("/pomodoro/stop") >= 0) {
-            stopTimer();
+        if (request.indexOf("/pomo/work") >= 0) {
+            isWork = true;
+            duration = workMin * 60 * 1000UL;
+            endTime = millis() + duration;
+            running = true;
+            activate();
+            return true;
+        }
+        
+        if (request.indexOf("/pomo/break") >= 0) {
+            isWork = false;
+            duration = breakMin * 60 * 1000UL;
+            endTime = millis() + duration;
+            running = true;
+            activate();
+            return true;
+        }
+        
+        if (request.indexOf("/pomo/stop") >= 0) {
+            running = false;
+            if (active) {
+                P->displayClear();
+                P->displayText("STOP", PA_CENTER, 0, 0, PA_PRINT, PA_NO_EFFECT);
+            }
             return true;
         }
         
@@ -104,85 +138,7 @@ public:
     }
     
     bool isRunning() const {
-        return pomodoroRunning;
-    }
-
-private:
-    void startTimer(int minutes) {
-        pomodoroDuration = minutes * 60 * 1000UL;
-        pomodoroEndTime = millis() + pomodoroDuration;
-        pomodoroRunning = true;
-        activate();
-    }
-    
-    void stopTimer() {
-        pomodoroRunning = false;
-        active = false;
-    }
-    
-    void drawDigit(int num, int x, int y) {
-        MD_MAX72XX *mx = P->getGraphicObject();
-        int max_x = (4 * 8) - 1; // Assuming 4 modules
-        
-        for (int i = 0; i < 3; i++) {
-            uint8_t col = TINY_FONT[num][i];
-            for (int bit = 0; bit < 5; bit++) {
-                if (col & (1 << (7 - bit))) {
-                    int targetY = y + bit - 1;
-                    int targetX = x + i;
-                    mx->setPoint(7 - targetY, max_x - targetX, true);
-                }
-            }
-        }
-    }
-
-    void drawTinyTime(int mins, int secs) {
-        MD_MAX72XX *mx = P->getGraphicObject();
-        mx->clear();
-        
-        int startX = 8;
-        int max_x = (4 * 8) - 1;
-
-        drawDigit(mins / 10, startX, 2);
-        drawDigit(mins % 10, startX + 4, 2);
-        
-        // Colon
-        mx->setPoint(7 - 3, max_x - (startX + 8), true);
-        mx->setPoint(7 - 5, max_x - (startX + 8), true);
-        
-        drawDigit(secs / 10, startX + 10, 2);
-        drawDigit(secs % 10, startX + 14, 2);
-    }
-
-    void drawBorder(float percent) {
-        int w = 4 * 8;
-        int h = 8;
-        int totalPerimeter = (2 * w) + (2 * (h - 2));
-        int ledsLit = (int)(percent * totalPerimeter);
-        
-        int count = 0;
-        MD_MAX72XX *mx = P->getGraphicObject();
-        
-        // Top row
-        for (int x = 0; x < w; x++) {
-            if (count < ledsLit) mx->setPoint(7, x, true);
-            count++;
-        }
-        // Right column
-        for (int y = 1; y < h - 1; y++) {
-            if (count < ledsLit) mx->setPoint(7 - y, w - 1, true);
-            count++;
-        }
-        // Bottom row
-        for (int x = w - 1; x >= 0; x--) {
-            if (count < ledsLit) mx->setPoint(0, x, true);
-            count++;
-        }
-        // Left column
-        for (int y = h - 2; y >= 1; y--) {
-            if (count < ledsLit) mx->setPoint(7 - y, 0, true);
-            count++;
-        }
+        return running;
     }
 };
 
