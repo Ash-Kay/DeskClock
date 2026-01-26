@@ -3,11 +3,11 @@
 #include <MD_MAX72XX.h>
 #include <SPI.h>
 #include <time.h>
-#include "config/config.h"
-#include "modules/ModuleManager.h"
-#include "modules/ClockModule.h"
-#include "modules/PomodoroModule.h"
-#include "modules/TextModule.h"
+#include "config.h"
+#include "ModuleManager.h"
+#include "ClockModule.h"
+#include "PomodoroModule.h"
+#include "TextModule.h"
 
 // --------------------------------------------------------------------------------
 //  CONFIGURATION

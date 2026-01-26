@@ -163,7 +163,7 @@ private:
 1. Create `YourModule.h` in `modules/` directory
 2. Add include to `SmartClock.ino`:
    ```cpp
-   #include "modules/YourModule.h"
+   #include "YourModule.h"
    ```
 3. Add to setup():
    ```cpp
