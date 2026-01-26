@@ -1,5 +1,5 @@
 # WiFi Configuration
-config.h
+config/config.h
 
 # Build artifacts
 *.bin
