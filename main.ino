@@ -3,6 +3,7 @@
 #include <MD_MAX72XX.h>
 #include <SPI.h>
 #include <time.h>
+#include "config.h"
 
 // --------------------------------------------------------------------------------
 //  CONFIGURATION
@@ -12,9 +13,6 @@
 #define CLK_PIN   18
 #define DATA_PIN  23
 #define CS_PIN    5
-
-const char* ssid = "ACT102677324080";
-const char* password = "50534058";
 
 // TIME SETTINGS
 const char* ntpServer = "pool.ntp.org";

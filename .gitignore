@@ -1,0 +1,21 @@
+# WiFi Configuration
+config.h
+
+# Build artifacts
+*.bin
+*.elf
+*.map
+
+# IDE files
+.vscode/
+*.code-workspace
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*~
