@@ -33,6 +33,7 @@ String generateWebPage() {
 <!DOCTYPE html>
 <html>
 <head>
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Smart Matrix Clock</title>
   <style>
@@ -86,7 +87,7 @@ void handleWiFi() {
   moduleManager.handleWebRequest(req);
 
   // Send response
-  client.print("HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n");
+  client.print("HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n");
   client.print(generateWebPage());
   client.stop();
 }

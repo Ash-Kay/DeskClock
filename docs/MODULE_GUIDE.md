@@ -43,12 +43,12 @@ Return HTML controls that will be injected into the web interface:
 
 ```cpp
 const char* getWebControls() override {
-    return R"(
+    return R"rawliteral(
     <div style="border-left: 5px solid #4CAF50;">
         <h3>🔧 Your Module</h3>
         <button onclick="sendRequest('/yourmodule/action')">Action</button>
     </div>
-    )";
+    )rawliteral";
 }
 ```
 
@@ -123,13 +123,13 @@ public:
     }
 
     const char* getWebControls() override {
-        return R"(
+        return R"rawliteral(
         <div style="border-left: 5px solid #FF5722;">
             <h3>🔢 Counter</h3>
             <button onclick="sendRequest('/counter/start')">Start Counter</button>
             <button onclick="sendRequest('/counter/reset')">Reset</button>
         </div>
-        )";
+        )rawliteral";
     }
 
     bool handleWebRequest(String request) override {
@@ -160,7 +160,7 @@ private:
 
 ### 7. Integration Steps
 
-1. Create `YourModule.h` in `modules/` directory
+1. Create `YourModule.h` in the main project directory (same as SmartClock.ino)
 2. Add include to `SmartClock.ino`:
    ```cpp
    #include "YourModule.h"
@@ -171,6 +171,8 @@ private:
    ```
 
 Module automatically appears in web interface and is ready to use!
+
+**Note**: For Arduino IDE compatibility, all `.h` files must be in the same directory as the `.ino` file. The organized folder structure in `modules/`, `config/`, and `docs/` is maintained for development reference, but Arduino IDE uses the flattened structure.
 
 ### 8. Best Practices
 
