@@ -70,7 +70,7 @@ public:
     }
     
     const char* getWebControls() override {
-        return R"(
+        return R"rawliteral(
         <div style="border-left: 5px solid #2196F3;">
             <h3>🕒 Clock Settings</h3>
             <input type="number" id="tz" value="5.5" step="0.5" placeholder="Timezone">
@@ -79,7 +79,7 @@ public:
             <button class="alt" onclick="sendRequest('/clock/config?tz=' + document.getElementById('tz').value + '&fmt=' + document.querySelector('input[name=\"fmt\"]:checked').value)">Update Settings</button>
             <button onclick="sendRequest('/clock/activate')">Show Clock</button>
         </div>
-        )";
+        )rawliteral";
     }
     
     bool handleWebRequest(String request) override {

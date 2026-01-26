@@ -73,7 +73,7 @@ public:
     }
     
     const char* getWebControls() override {
-        return R"(
+        return R"rawliteral(
         <div style="border-left: 5px solid #FF9800;">
             <h3>🍅 Pomodoro Timer</h3>
             <button class="pomo" onclick="sendRequest('/pomodoro/start?min=25')">Focus (25m)</button>
@@ -81,7 +81,7 @@ public:
             <button class="pomo" onclick="sendRequest('/pomodoro/start?min=15')" style="background:#9C27B0;">Custom (15m)</button>
             <button class="stop" onclick="sendRequest('/pomodoro/stop')">Stop</button>
         </div>
-        )";
+        )rawliteral";
     }
     
     bool handleWebRequest(String request) override {

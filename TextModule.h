@@ -44,7 +44,7 @@ public:
     }
     
     const char* getWebControls() override {
-        return R"(
+        return R"rawliteral(
         <div style="border-left: 5px solid #9C27B0;">
             <h3>💬 Text Scroll</h3>
             <input type="text" id="textMsg" placeholder="Enter message..." maxlength="250">
@@ -57,7 +57,7 @@ public:
             <button onclick="sendRequest('/text/show?msg=' + encodeURIComponent(document.getElementById('textMsg').value) + '&speed=' + document.getElementById('textSpeed').value)">Scroll Text</button>
             <button onclick="sendRequest('/text/show?msg=Hello%20World!&speed=50')">Test Message</button>
         </div>
-        )";
+        )rawliteral";
     }
     
     bool handleWebRequest(String request) override {
