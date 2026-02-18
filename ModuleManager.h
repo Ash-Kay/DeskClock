@@ -124,6 +124,25 @@ public:
     const std::vector<Module*>& getModules() const {
         return modules;
     }
+    
+    String generateJsonData() {
+        String json = "{\"active\":\"";
+        json += activeModule ? activeModule->getName() : "None";
+        json += "\"";
+        
+        for (Module* module : modules) {
+            String data = module->getJsonData();
+            if (data.length() > 0) {
+                json += ",\"";
+                json += module->getName();
+                json += "\":";
+                json += data;
+            }
+        }
+        
+        json += "}";
+        return json;
+    }
 
 private:
     void activateModule(Module* module) {

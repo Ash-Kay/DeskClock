@@ -22,6 +22,9 @@ public:
     // Web request handling
     virtual bool handleWebRequest(String request) { return false; }
     
+    // JSON data for live dashboard
+    virtual String getJsonData() { return ""; }
+    
     // Display access
     void setDisplay(MD_Parola* display) { P = display; }
     

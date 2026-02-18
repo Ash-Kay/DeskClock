@@ -29,18 +29,6 @@ private:
     char displayBuffer[32];
     bool useCelsius = true;
 
-    void scanI2C() {
-        Serial.println("Scanning I2C bus...");
-        for (uint8_t addr = 1; addr < 127; addr++) {
-            Wire.beginTransmission(addr);
-            if (Wire.endTransmission() == 0) {
-                Serial.print("  Device found at 0x");
-                if (addr < 16) Serial.print("0");
-                Serial.println(addr, HEX);
-            }
-        }
-    }
-
 public:
     BME280Module() {}
 
@@ -139,6 +127,14 @@ public:
         }
 
         return false;
+    }
+    
+    String getJsonData() override {
+        float t = useCelsius ? temperature : (temperature * 9.0 / 5.0 + 32.0);
+        String json = "{\"t\":" + String(t, 1) + ",\"h\":" + String(humidity, 1) +
+                      ",\"p\":" + String(pressure, 1) + ",\"u\":\"" + String(useCelsius ? "C" : "F") +
+                      "\",\"ok\":" + String(sensorReady ? 1 : 0) + "}";
+        return json;
     }
 
 private:

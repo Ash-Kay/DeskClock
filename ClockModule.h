@@ -105,7 +105,16 @@ public:
     }
     
     bool shouldStayActive() override {
-        return true; // Clock is default active module
+        return true;
+    }
+    
+    String getJsonData() override {
+        String json = "{\"time\":\"";
+        json += timeBuffer;
+        json += "\",\"date\":\"";
+        json += dateBuffer;
+        json += "\"}";
+        return json;
     }
 
 private:

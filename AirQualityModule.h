@@ -169,6 +169,18 @@ public:
 
         return false;
     }
+    
+    String getJsonData() override {
+        int secs = 0;
+        if (active && !warmedUp) {
+            secs = (PMS_WARMUP_MS - (millis() - activatedAt)) / 1000;
+            if (secs < 0) secs = 0;
+        }
+        String json = "{\"pm1\":" + String(pm1_0) + ",\"pm25\":" + String(pm2_5) +
+                      ",\"pm10\":" + String(pm10) + ",\"on\":" + String(active ? 1 : 0) +
+                      ",\"warm\":" + String(warmedUp ? 1 : 0) + ",\"sec\":" + String(secs) + "}";
+        return json;
+    }
 
 private:
     void wakeUpSensor() {

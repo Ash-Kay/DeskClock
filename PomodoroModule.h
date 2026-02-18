@@ -140,6 +140,21 @@ public:
     bool isRunning() const {
         return running;
     }
+    
+    String getJsonData() override {
+        int mins = 0, secs = 0;
+        if (running) {
+            long remaining = endTime - millis();
+            if (remaining > 0) {
+                mins = remaining / 60000;
+                secs = (remaining % 60000) / 1000;
+            }
+        }
+        String json = "{\"run\":" + String(running ? 1 : 0) + ",\"work\":" + String(isWork ? 1 : 0) +
+                      ",\"min\":" + String(mins) + ",\"sec\":" + String(secs) +
+                      ",\"wm\":" + String(workMin) + ",\"bm\":" + String(breakMin) + "}";
+        return json;
+    }
 };
 
 #endif // POMODORO_MODULE_H
