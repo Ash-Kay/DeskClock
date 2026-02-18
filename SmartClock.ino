@@ -9,6 +9,7 @@
 #include "PomodoroModule.h"
 #include "TextModule.h"
 #include "BME280Module.h"
+#include "AirQualityModule.h"
 
 // --------------------------------------------------------------------------------
 //  CONFIGURATION
@@ -122,6 +123,7 @@ void setup() {
   moduleManager.addModule(new PomodoroModule());
   moduleManager.addModule(new TextModule());
   moduleManager.addModule(new BME280Module());
+  moduleManager.addModule(new AirQualityModule());
   
   P.displayClear();
   Serial.println("System ready!");
