@@ -48,13 +48,7 @@ public:
         Wire.begin(BME_SDA, BME_SCL);
         delay(100);
 
-        scanI2C();
-
-        sensorReady = bme.begin(0x76, &Wire);
-        if (!sensorReady) {
-            Serial.println("BME280 not at 0x76, trying 0x77...");
-            sensorReady = bme.begin(0x77, &Wire);
-        }
+        sensorReady = bme.begin(0x77, &Wire);
 
         if (sensorReady) {
             bme.setSampling(
@@ -65,9 +59,9 @@ public:
                 Adafruit_BME280::FILTER_X16,
                 Adafruit_BME280::STANDBY_MS_500
             );
-            Serial.println("BME280 initialized successfully");
+            Serial.println("BME280 initialized at 0x77");
         } else {
-            Serial.println("BME280 not found on either address. Check wiring:");
+            Serial.println("BME280 not found. Check wiring:");
             Serial.println("  SDA -> GPIO 21, SCL -> GPIO 22, VCC -> 3.3V");
         }
     }

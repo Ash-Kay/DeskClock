@@ -13,6 +13,7 @@
 #define PMS_WARMUP_MS 30000
 #define PMS_READ_INTERVAL 2500
 #define PMS_DISPLAY_CYCLE 3000
+#define PMS_AUTO_SLEEP_MS 120000
 
 class AirQualityModule : public Module {
 private:
@@ -27,8 +28,14 @@ private:
     uint16_t pm2_5 = 0;
     uint16_t pm10 = 0;
 
-    enum DisplayMode { AQI_PM25, AQI_PM10, AQI_PM1 };
+    uint16_t last_pm1_0 = 0;
+    uint16_t last_pm2_5 = 0;
+    uint16_t last_pm10 = 0;
+    bool hasLastValues = false;
+
+    enum DisplayMode { AQI_PM25, AQI_PM10, AQI_PM1, AQI_WARMUP };
     DisplayMode currentMode = AQI_PM25;
+    int modeCount = 3;
 
     char displayBuffer[32];
     char warmupBuffer[16];
@@ -62,6 +69,12 @@ public:
     void deactivate() override {
         active = false;
         warmedUp = false;
+
+        last_pm1_0 = pm1_0;
+        last_pm2_5 = pm2_5;
+        last_pm10 = pm10;
+        if (pm1_0 || pm2_5 || pm10) hasLastValues = true;
+
         sleepSensor();
         Serial.println("PMSA003 sleeping");
     }
@@ -72,16 +85,32 @@ public:
         if (!warmedUp) {
             unsigned long elapsed = millis() - activatedAt;
             if (elapsed < PMS_WARMUP_MS) {
-                int secs = (PMS_WARMUP_MS - elapsed) / 1000;
-                sprintf(warmupBuffer, "W %ds", secs);
-                P->displayText(warmupBuffer, PA_CENTER, 0, 0, PA_PRINT, PA_NO_EFFECT);
-                P->displayAnimate();
+                if (hasLastValues) {
+                    pm1_0 = last_pm1_0;
+                    pm2_5 = last_pm2_5;
+                    pm10 = last_pm10;
+                    modeCount = 4;
+                } else {
+                    int secs = (PMS_WARMUP_MS - elapsed) / 1000;
+                    sprintf(warmupBuffer, "W %ds", secs);
+                    P->displayText(warmupBuffer, PA_CENTER, 0, 0, PA_PRINT, PA_NO_EFFECT);
+                    P->displayAnimate();
+                    drainSerial();
+                    return;
+                }
+            } else {
+                warmedUp = true;
+                modeCount = 3;
+                if (currentMode == AQI_WARMUP) currentMode = AQI_PM25;
                 drainSerial();
-                return;
+                Serial.println("PMSA003 ready, showing fresh values");
             }
-            warmedUp = true;
-            drainSerial();
-            Serial.println("PMSA003 ready");
+        }
+
+        if (warmedUp && millis() - activatedAt > PMS_AUTO_SLEEP_MS) {
+            Serial.println("PMSA003 auto-sleep after 2min");
+            deactivate();
+            return;
         }
 
         if (millis() - lastRead > PMS_READ_INTERVAL) {
@@ -90,7 +119,7 @@ public:
         }
 
         if (millis() - lastCycle > PMS_DISPLAY_CYCLE) {
-            currentMode = static_cast<DisplayMode>((currentMode + 1) % 3);
+            currentMode = static_cast<DisplayMode>((currentMode + 1) % modeCount);
             lastCycle = millis();
         }
 
@@ -233,6 +262,12 @@ private:
             case AQI_PM1:
                 sprintf(displayBuffer, "1:%d", pm1_0);
                 break;
+            case AQI_WARMUP: {
+                int secs = (PMS_WARMUP_MS - (millis() - activatedAt)) / 1000;
+                if (secs < 0) secs = 0;
+                sprintf(displayBuffer, "W%ds", secs);
+                break;
+            }
         }
     }
 
