@@ -8,6 +8,7 @@
 #include "ClockModule.h"
 #include "PomodoroModule.h"
 #include "TextModule.h"
+#include "BME280Module.h"
 
 // --------------------------------------------------------------------------------
 //  CONFIGURATION
@@ -120,6 +121,7 @@ void setup() {
   moduleManager.addModule(new ClockModule());
   moduleManager.addModule(new PomodoroModule());
   moduleManager.addModule(new TextModule());
+  moduleManager.addModule(new BME280Module());
   
   P.displayClear();
   Serial.println("System ready!");
