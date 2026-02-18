@@ -11,7 +11,7 @@ private:
     unsigned long lastTimeUpdate = 0;
     unsigned long lastDateScroll = 0;
     bool isPM = false;
-    bool use24hr = true;
+    bool use24hr = false;
     float timeZoneOffset = 5.5;
     bool showingDate = false;
     
@@ -59,10 +59,7 @@ public:
         }
         
         // Animate time display
-        if (P->displayAnimate() && !use24hr && isPM) {
-            // Show PM indicator
-            P->getGraphicObject()->setPoint(0, 31, true);
-        }
+        P->displayAnimate();
     }
     
     const char* getName() override {
@@ -74,8 +71,8 @@ public:
         <div style="border-left: 5px solid #2196F3;">
             <h3>🕒 Clock Settings</h3>
             <input type="number" id="tz" value="5.5" step="0.5" placeholder="Timezone">
-            <label><input type="radio" name="fmt" value="24" checked> 24H</label>
-            <label><input type="radio" name="fmt" value="12"> 12H</label>
+            <label><input type="radio" name="fmt" value="24"> 24H</label>
+            <label><input type="radio" name="fmt" value="12" checked> 12H</label>
             <button class="alt" onclick="sendRequest('/clock/config?tz=' + document.getElementById('tz').value + '&fmt=' + document.querySelector('input[name=\"fmt\"]:checked').value)">Update Settings</button>
             <button onclick="sendRequest('/clock/activate')">Show Clock</button>
         </div>
@@ -84,13 +81,18 @@ public:
     
     bool handleWebRequest(String request) override {
         if (request.indexOf("/clock/config") >= 0) {
-            if (request.indexOf("tz=") >= 0) {
-                timeZoneOffset = request.substring(request.indexOf("tz=")+3).toFloat();
+            int tzIdx = request.indexOf("tz=");
+            if (tzIdx >= 0) {
+                int tzEnd = request.indexOf("&", tzIdx);
+                if (tzEnd < 0) tzEnd = request.indexOf(" ", tzIdx);
+                if (tzEnd < 0) tzEnd = request.length();
+                timeZoneOffset = request.substring(tzIdx + 3, tzEnd).toFloat();
             }
             if (request.indexOf("fmt=") >= 0) {
                 use24hr = (request.indexOf("fmt=24") >= 0);
             }
-            init(); // Reconfigure time
+            init();
+            lastTimeUpdate = 0;
             return true;
         }
         
